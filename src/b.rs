@@ -314,8 +314,7 @@ pub enum Op {
     Funcall        {result: usize, fun: Arg, args: Array<Arg>},
     Label          {label: usize},
     JmpLabel       {label: usize},
-    // TODO: Rename JmpIfNot to JmpUnless
-    JmpIfNotLabel  {label: usize, arg: Arg},
+    JmpUnless      {label: usize, arg: Arg},
     Return         {arg: Option<Arg>},
 }
 
@@ -771,7 +770,7 @@ pub unsafe fn compile_statement(l: *mut Lexer, c: *mut Compiler) -> Option<()> {
                 let saved_auto_vars_count = (*c).auto_vars_ator.count;
                    let (cond, _) = compile_expression(l, c)?;
                    let else_label = allocate_label_index(c);
-                   push_opcode(Op::JmpIfNotLabel{label: else_label, arg: cond}, (*l).loc, c);
+                   push_opcode(Op::JmpUnless{label: else_label, arg: cond}, (*l).loc, c);
                 (*c).auto_vars_ator.count = saved_auto_vars_count;
             get_and_expect_token_but_continue(l, c, Token::CParen)?;
 
@@ -803,7 +802,7 @@ pub unsafe fn compile_statement(l: *mut Lexer, c: *mut Compiler) -> Option<()> {
             get_and_expect_token_but_continue(l, c, Token::CParen)?;
 
             let out_label = allocate_label_index(c);
-            push_opcode(Op::JmpIfNotLabel{label: out_label, arg}, (*l).loc, c);
+            push_opcode(Op::JmpUnless{label: out_label, arg}, (*l).loc, c);
 
                 compile_statement(l, c)?;
 
@@ -864,7 +863,7 @@ pub unsafe fn compile_statement(l: *mut Lexer, c: *mut Compiler) -> Option<()> {
                 }, case_loc, c);
 
                 let next_case_label = allocate_label_index(c);
-                push_opcode(Op::JmpIfNotLabel {
+                push_opcode(Op::JmpUnless {
                     label: next_case_label,
                     arg: Arg::AutoVar((*switch_frame).cond)
                 }, case_loc, c);
